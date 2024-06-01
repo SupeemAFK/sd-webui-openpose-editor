@@ -52,6 +52,8 @@ interface AppData {
   modalId: string | undefined;
 
   text_description: string | undefined;
+
+  generate_poses_loading: boolean | undefined;
 };
 
 /**
@@ -350,7 +352,8 @@ export default defineComponent({
       activePersonId: undefined,
       activeBodyPart: undefined,
       modalId: undefined,
-      text_description: ""
+      text_description: "",
+      generate_poses_loading: false,
     };
   },
   setup() {
@@ -518,6 +521,7 @@ export default defineComponent({
     },
     async GeneratePoses() {
       if (!this.text_description) return
+      this.generate_poses_loading = true
       const endpoint = 'http://127.0.0.1:5000/generate'
       const res = await fetch(`${endpoint}?text=${this.text_description}`)
       const data = await res.json();
@@ -527,6 +531,7 @@ export default defineComponent({
         people: data.people as IOpenposePersonJson[],
         animals: data.animals,
       } as IOpenposeJson)
+      this.generate_poses_loading = false
     },
     getKeypointProxy(keypoint: OpenposeKeypoint2D): UnwrapRef<OpenposeKeypoint2D> {
       return this.keypointMap.get(keypoint.id)!;
@@ -1050,7 +1055,8 @@ export default defineComponent({
       <a-input-group>
         <a-input :value="text_description" @input="(event: Event) => text_description = (event.target as HTMLInputElement).value" placeholder="A man running" />
       </a-input-group>
-      <a-button @click="GeneratePoses" style="margin-top: 0.25rem;" type="primary">Create Pose!</a-button>
+      <a-button v-if="generate_poses_loading" style="margin-top: 0.25rem;" type="primary" loading />
+      <a-button v-if="!generate_poses_loading" @click="GeneratePoses" style="margin-top: 0.25rem;" type="primary">Create Pose!</a-button>
       <a-divider orientation="left" orientation-margin="0px">
         {{ $t('ui.canvas') }}
       </a-divider>
