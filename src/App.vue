@@ -524,6 +524,7 @@ export default defineComponent({
       const endpoint = 'https://supeem-posecrafts-api.hf.space/generate'
       const res = await fetch(`${endpoint}?text=${this.text_description}`)
       const data = await res.json();
+      this.clearCanvas();
       this.loadPeopleFromJson({ 
         canvas_width: data.canvas_width,
         canvas_height: data.canvas_height,
