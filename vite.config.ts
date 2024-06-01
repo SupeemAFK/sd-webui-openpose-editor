@@ -9,7 +9,7 @@ import packageJson from './package.json'
 // https://vitejs.dev/config/
 export default defineConfig({
   base: process.env.GITHUB_PAGES_PATH || (process.env.NODE_ENV === 'production'
-    ? '/openpose_editor/'
+    ? '/'
     : '/'),
   plugins: [
     vue(),
