@@ -12,6 +12,7 @@ import {
   OpenposeKeypoint2D,
   OpenposeObject,
   type IOpenposeJson,
+  type IOpenposePersonJson,
   OpenposeBodyPart,
   OpenposeAnimal,
 } from './Openpose';
@@ -49,6 +50,8 @@ interface AppData {
 
   // The modal id to post message back to.
   modalId: string | undefined;
+
+  text_description: string | undefined;
 };
 
 /**
@@ -330,8 +333,8 @@ function getImageDimensionsFromDataURL(dataURL: string): Promise<[number, number
 export default defineComponent({
   data(): AppData {
     return {
-      canvasHeight: 512,
-      canvasWidth: 512,
+      canvasHeight: 300,
+      canvasWidth: 900,
       personName: '',
       hideInvisibleKeypoints: false,
       people: new Map<number, OpenposePerson>(),
@@ -347,6 +350,7 @@ export default defineComponent({
       activePersonId: undefined,
       activeBodyPart: undefined,
       modalId: undefined,
+      text_description: ""
     };
   },
   setup() {
@@ -370,7 +374,7 @@ export default defineComponent({
       this.resizeOpenposeCanvas(this.canvasWidth, this.canvasHeight);
 
       // By default have a example person.
-      this.addDefaultPerson();
+      //this.addDefaultPerson();
 
       const selectionHandler = (event: fabric.IEvent<MouseEvent>) => {
         if (event.selected) {
@@ -453,7 +457,8 @@ export default defineComponent({
       // scrolls the iframe despite `e.preventDefault` is called. Issue #7.
       // Add keydown event to document
       document.addEventListener('keydown', (e) => {
-        if (e.code === 'Space' || e.code === 'KeyF') {
+        console.log(e.code)
+        if (e.code === 'AltLeft') {
           panningEnabled = true;
           this.canvas!.selection = false;
           // Prevent default behaviour of Space which is scroll the page down.
@@ -463,7 +468,7 @@ export default defineComponent({
 
       // Add keyup event to document
       document.addEventListener('keyup', (e) => {
-        if (e.code === 'Space' || e.code === 'KeyF') {
+        if (e.code === 'AltLeft') {
           panningEnabled = false;
           this.canvas!.selection = true;
         }
@@ -508,6 +513,21 @@ export default defineComponent({
     });
   },
   methods: {
+    ChangeTheme(theme: string) {
+      window.location.href=`${window.location.protocol}//${window.location.host}?theme=${theme}`
+    },
+    async GeneratePoses() {
+      if (!this.text_description) return
+      const endpoint = 'http://127.0.0.1:5000/generate'
+      const res = await fetch(`${endpoint}?text=${this.text_description}`)
+      const data = await res.json();
+      this.loadPeopleFromJson({ 
+        canvas_width: data.canvas_width,
+        canvas_height: data.canvas_height,
+        people: data.people as IOpenposePersonJson[],
+        animals: data.animals,
+      } as IOpenposeJson)
+    },
     getKeypointProxy(keypoint: OpenposeKeypoint2D): UnwrapRef<OpenposeKeypoint2D> {
       return this.keypointMap.get(keypoint.id)!;
     },
@@ -1008,6 +1028,11 @@ export default defineComponent({
   <a-row>
     <a-col :span="8" id="control-panel">
       <Header></Header>
+      <a-divider orientation="left" orientation-margin="0px">
+        {{ $t('Theme') }}
+      </a-divider>
+      <a-button style="background-color: orange; border-color: orange;" @click="() => ChangeTheme('light')" type="primary">Light Theme☀️</a-button>
+      <a-button style="background-color: grey; border-color: grey; margin-left: 0.25rem;" @click="() => ChangeTheme('dark')" type="primary">Dark Theme🌙</a-button>
       <a-button v-if="modalId !== undefined" @click="sendCanvasAsFrameMessage">
         {{ $t('ui.sendPose') }}
       </a-button>
@@ -1015,10 +1040,17 @@ export default defineComponent({
         {{ $t('ui.keybinding') }}
       </a-divider>
       <a-descriptions :column="1">
-        <a-descriptions-item :label="$t('ui.panningKeybinding')">{{ $t('ui.panningDescription') }}</a-descriptions-item>
+        <a-descriptions-item :label="$t('(AltLeft) + Drag Mouse')">{{ $t('ui.panningDescription') }}</a-descriptions-item>
         <a-descriptions-item :label="$t('ui.zoomKeybinding')">{{ $t('ui.zoomDescription') }}</a-descriptions-item>
         <a-descriptions-item :label="$t('ui.hideKeybinding')">{{ $t('ui.hideDescription') }}</a-descriptions-item>
       </a-descriptions>
+      <a-divider orientation="left" orientation-margin="0px">
+        {{ $t('Text Description') }}
+      </a-divider>
+      <a-input-group>
+        <a-input :value="text_description" @input="(event: Event) => text_description = (event.target as HTMLInputElement).value" placeholder="A man running" />
+      </a-input-group>
+      <a-button @click="GeneratePoses" style="margin-top: 0.25rem;" type="primary">Create Pose!</a-button>
       <a-divider orientation="left" orientation-margin="0px">
         {{ $t('ui.canvas') }}
       </a-divider>

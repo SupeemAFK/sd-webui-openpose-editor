@@ -902,5 +902,6 @@ export {
 };
 
 export type {
+    IOpenposePersonJson,
     IOpenposeJson
 };
