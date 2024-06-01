@@ -14,7 +14,7 @@ if (theme === 'dark') {
   import('ant-design-vue/dist/antd.css');
 }
 
-import './assets/main.css'
+import './main.css'
 
 const app = createApp(App);
 
