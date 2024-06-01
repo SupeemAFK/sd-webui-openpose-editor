@@ -460,7 +460,6 @@ export default defineComponent({
       // scrolls the iframe despite `e.preventDefault` is called. Issue #7.
       // Add keydown event to document
       document.addEventListener('keydown', (e) => {
-        console.log(e.code)
         if (e.code === 'AltLeft') {
           panningEnabled = true;
           this.canvas!.selection = false;
@@ -522,7 +521,7 @@ export default defineComponent({
     async GeneratePoses() {
       if (!this.text_description) return
       this.generate_poses_loading = true
-      const endpoint = 'http://127.0.0.1:5000/generate'
+      const endpoint = 'https://supeem-posecrafts-api.hf.space/generate'
       const res = await fetch(`${endpoint}?text=${this.text_description}`)
       const data = await res.json();
       this.loadPeopleFromJson({ 
